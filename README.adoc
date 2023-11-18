@@ -1,0 +1,199 @@
+= Base de datos 1: Trabajo Práctico 
+Manuel Acosta <manuacostaok@gmail.com>;Alfonso Lombardi <ajavierlombardi@gmail.com>; Roman Quevedo <romanaq@hotmail.com.ar>;Tobias Rumiz <TobiasRumiz@gmail.com>
+v1, {docdate}
+:title-page:
+:numbered:
+:source-highlighter: highlight.js
+:tabsize: 4
+
+== Introducción
+
+El objetivo del trabajo práctico es implementar una base de datos para almacenar la información
+relativa a pedidos de clientes para el supermercado ChangoOnline.
+
+- El sistema debe permitir:
+
+* Creación del pedido.
+** Se deberá incluir la lógica que reciba los datos del pedido—id de
+le usuarie, id de dirección—y que devuelva true si se logra crear el pedido, ó false si
+se rechaza.
+** Si se aprueba la creación del pedido, se deberá insertar una fila en la tabla pedido con
+los datos de le cliente, la fecha y hora del pedido, y el costo de envío correspondiente
+al código postal, dejando su estado como ingresado.
+
+* Agregar productos:
+** Se deberá incluir la lógica que reciba un id de pedido, un id
+de producto y una cantidad, y añada la información al pedido. Retornará true si la
+operación se realiza satisfactoriamente, ó false en caso contrario.
+** Si se aprueba la incorporación, se deberá insertar una fila en la tabla pedido_detalle
+con los datos del producto. Si el pedido ya contiene al producto, se deberá actualizar
+la fila correspondiente, sumando la nueva cantidad. En cualquiera de los dos casos,
+se deberá descontar dicha cantidad del stock disponible y sumarla al stock reservado.
+También deberá mantenerse actualizado el monto total del pedido de forma coherente
+con el detalle de productos solicitados.
+
+
+* Cerrar pedidos:
+** Se deberá proveer la lógica que reciba un id de pedido, la fecha
+y hora de entrega, y que devuelva true si se logra cerrar el pedido ó false en caso
+contrario.
+** Si se aprueba el cierre, se deberá actualizar la fila correspondiente en la tabla pedido
+con la fecha de entrega, y las horas de entrega desde y hasta, dejando su estado como
+completado. Calcular la ‘hora hasta’ como dos horas posterior a la ‘hora desde’.
+
+* Cancelar pedidos:
+** Se deberá proveer la lógica que permita cancelar un pedido.
+El procedimiento debe recibir el id de pedido, y retornar true si se logra cancelar
+el pedido ó false en caso contrario.
+** Si las validaciones pasan correctamente, se deberá marcar el estado del pedido como
+cancelado. Además, deberá sumarse al stock disponible de cada producto la cantidad
+incluida en el pedido cancelado, y descontarla del stock reservado.
+
+* Entregar pedidos:
+** Se deberá proveer la lógica que reciba un id de pedido, y que
+retorne true si se logra marcar el pedido como entregado ó false en caso contrario.
+** Si las validaciones pasan correctamente, se deberá marcar el estado del pedido como
+entregado. Además, deberá restarse del stock reservado de cada producto la cantidad
+incluida en el pedido entregado.
+
+* Generar solicitudes de reposicion del stock:
+** Diariamente se deberán generar las solicitudes de reposición de los productos que tengan un stock bajo. Para ello, se debe
+insertar una fila en la tabla reposicion por cada producto cuya suma del stock disponible y del reservado sea menor o igual al punto de reposición. 
+La cantidad a reponer será la que permita llegar al stock máximo del producto y el estado de la solicitud
+se grabará como pendiente. La fecha de solicitud corresponderá a la fecha actual. El procedimiento deberá retornar false en caso de que ya exista previamente alguna solicitud de 
+reposición en estado pendiente para la fecha actual, y true en caso contrario.
+
+* "Envío" de emails a los clientes (notificando los estados de su pedido):
+** El trabajo práctico deberá proveer la funcionalidad de generar emails para ser enviados a la dirección de email de le cliente.
+
+== Descripción
+
+En esta sección se describen las principales dificultades que fueron apareciendo a lo largo del trabajo y las
+soluciones de las mismas.
+
+Problemas con la creación de la base de datos::
+Al principio, indagamos en internet para averiguar como hacer desde go para abrir una base de datos en postgresql.
+Siguiendo pasos, acabamos por crear la base de datos. Lo que no sabíamos hasta algunos días despues, era que
+la base había sido creada en la base predeterminada "postgres". El profe nos recomendó hacer una función similar 
+a la que habíamos hecho pero que se encargue de todo lo referido a nuestra base. Debimos conectarnos a la base de
+postgres, desde allí crear la nuestra, y luego cerrar la predeterminada para una vez dentro de acosta_lombardi_quevedo_rumiz_db1
+hacer todo lo necesario para llevar adelante el trabajo práctico.
+
+Problemas con el rollback::
+Primeramente, creíamos que lo mejor era usar rollbacks en la mayoría de los codigos que tuvimos que hacer. Sin embargo, 
+investigando en la documentación de postgres y consultando con los profes, nos dimos cuenta que los rollbacks deshacen lo que se planteó en el código previo. Por lo tanto, debiamos re-considerar
+su utilización en el trabajo.
+
+Problemas con el serial en los identificadores::
+Al arrancar el trabajo práctico, no sabíamos que podíamos definir variables como "serial" (al agregarse un record, se agrega un id único nuevo). El profe nos recomendó que lo mejor sería este tipo
+de variables para el desarrollo del "TP".
+
+Problemas con indexar otro paquete go en el main::
+En principio desarrollamos la inteligencia de boltDB en un archivo .go aparte del principal, al terminar ese trabajo, tuvimos que aprender como linkear ese paquete desde nuestro programa principal,
+para eso simplemente teniamos que incorporar en las importaciones de Go el nombre de nuestra aplicación go (el nombre que le dimos a la app go cuando ejecutamos "go mod init ...") seguido del nombre
+del directorio que contiene el otro archivo .go, luego ya podiamos ejecutar las funciones públicas de ese archivo que ademas no tiene que contener un main. 
+
+Problemas con los isolation levels::
+Hemos estado debatiendo entre los cuatro para decidir cómo utilizarlos y que nivel usar. Hemos optado por el nivel *serializable* ya que necesitabamos que los stocks de los productos no se puedan ver afectados en las transacciones y, 
+como no pudimos implementarlo desde sql, lo hicimos desde go.
+
+== Implementacion
+
+menu-go.go::
+- Es mediador entre el programa y el usuario, mostrando un menú desplegable por consola con distintas opciones. Su función principal es facilitar la interacción del usuario con el programa, permitiéndole seleccionar las diferentes funcionalidades disponibles a través del menú.
+
+.Codigo de main.go
+
+[source,GO]
+----
+include::menu-go.go[]
+----
+
+Carpeta boltDB::
+- Es una carpeta que incluye todo lo vinculado al quinto punto del tp.
+
+.Codigo de nosql.go
+
+[source,GO]
+----
+include::boltDB/nosql.go[]
+----
+
+Carpeta sp::
+- Es una carpeta que incluye el codigo de cada uno de los stored procedures o triggers requeridos.
+
+
+agregar-datos.sql::
+- Archivo que se encarga de llenar las tablas
+
+.Codigo de agregar-datos.sql
+
+[source,GO]
+----
+include::agregar-datos.sql[]
+----
+
+agregar-pk-y-fk.sql::
+- Este código se encarga de nombrar las claves primarias y las claves foráneas
+ 
+.Codigo de agregar-pk-y-fk.sql
+
+[source,GO]
+----
+include::agregar-pk-y-fk.sql[]
+---- 
+
+crear-base-de-datos.sql::
+- Como su nombre lo indica, crea la base para el trabajo práctico
+
+.Codigo para crear-base-de-datos.sql
+
+[source,GO]
+----
+include::crear-base-de-datos.sql[]
+---- 
+
+dropear-base-de-datos.sql::
+- Como su nombre lo indica, elimina la base de datos si existe
+
+.Codigo para dropear-base-de-datos.sql
+
+[source,GO]
+----
+include::dropear-base-de-datos.sql[]
+---- 
+
+insertar-datos-en-pedidos.sql::
+- Este código llena la tabla entrada_trx_pedido
+
+.Codigo para insertar-datos-en-pedidos.sql
+
+[source,GO]
+----
+include::insertar-datos-en-pedidos.sql[]
+---- 
+
+quitar-pk-fk.sql::
+- Esto permite lo que en el menu figura como la opción 4
+
+.Codigo para quitar-pk-fk.sql
+
+[source,GO]
+----
+include::quitar-pk-fk.sql[]
+----
+
+tablas.sql::
+- Este código crea todas las tablas de la base de datos
+
+.Codigo para crear las tablas.sql
+
+[source,GO]
+----
+include::tablas.sql[]
+----
+
+== Conclusión
+En conclusión, hemos incorporado un gran aprendizaje sobre la integración de diferentes tecnologías y su aplicación en el desarrollo de sistemas de gestión de bases de datos. 
+Comprendimos como establecer una conexión exitosa entre Go y PostgreSQL, para poder realizar operaciones fundamentales en la base de datos como consultas y manipulación de datos. Por otro lado, experimentamos las ventajas del uso de una base de datos embebida 
+como BoltDB, y como aprovechar su rapidez y eficiencia en entornos con recursos limitados.

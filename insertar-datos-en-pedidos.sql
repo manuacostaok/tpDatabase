@@ -1,0 +1,16 @@
+insert into entrada_trx_pedido values (1, 'creación', 5, 1,null,null,null,null);
+insert into entrada_trx_pedido values (2, 'producto', null, null, 1,16,2,null);
+insert into entrada_trx_pedido values (3, 'producto', null, null, 1,14,4,null);
+insert into entrada_trx_pedido values (4, 'producto', null, null,1 ,11,1,null);
+insert into entrada_trx_pedido values (5, 'cierre', null, null, 1,null,null,'2023-11-17 15:30');
+insert into entrada_trx_pedido values (6, 'entrega', null, null, 1,null,null,null);
+insert into entrada_trx_pedido values (7, 'creación', 11, 2, null,null,null,null);
+insert into entrada_trx_pedido values (8, 'producto', null, null, 2,11,4,null);
+insert into entrada_trx_pedido values (9, 'cierre', null, null, 2,null,null,'2023-11-17 16:00');
+insert into entrada_trx_pedido values (10, 'cierre', null, null, 3,null,null,'2023-11-17 13:00');
+insert into entrada_trx_pedido values (11, 'producto', null,null, 2,11,2,null);
+insert into entrada_trx_pedido values (12, 'producto', null, null, 2,25,2,null);
+insert into entrada_trx_pedido values (13, 'producto', null,null, 2,3,5,null);
+insert into entrada_trx_pedido values (14, 'cancelación', null,null, 2,null,null,null);
+insert into entrada_trx_pedido values (15, 'cancelación', null, null, 4,null,null,null);
+insert into entrada_trx_pedido values (16, 'cancelación', null, null, 1,null,null,null);
